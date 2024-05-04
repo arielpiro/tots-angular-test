@@ -59,6 +59,8 @@ export class ClientService extends TotsBaseHttpService<Client> {
   }
 
   getClient() {
-    return this.http.get('`${this.basePathUrl}/client/list/client/fetch/1757`');
+    return this.http.get<Client>(
+      '`${this.basePathUrl}/client/list/client/fetch/1757`'
+    );
   }
 }

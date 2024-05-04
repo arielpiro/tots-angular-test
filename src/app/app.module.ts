@@ -5,17 +5,21 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { TOTS_CORE_PROVIDER, TotsCoreModule } from '@tots/core';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
-import { TOTS_AUTH_PROVIDER, TotsAuthConfig, TotsAuthInterceptor, TotsAuthModule } from '@tots/auth';
+import {
+  TOTS_AUTH_PROVIDER,
+  TotsAuthConfig,
+  TotsAuthInterceptor,
+  TotsAuthModule,
+} from '@tots/auth';
 import { TOTS_CLOUD_STORAGE_PROVIDER } from '@tots/cloud-storage';
 import { TableComponent } from './components/table/table.component';
 import { TotsTableModule } from '@tots/table';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { MatDialogModule } from '@angular/material/dialog';
+import { FormComponent } from './components/form/form.component';
 
 @NgModule({
-  declarations: [
-    AppComponent,
-    TableComponent
-  ],
+  declarations: [AppComponent, TableComponent, FormComponent],
   imports: [
     BrowserModule,
     AppRoutingModule,
@@ -24,34 +28,35 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     TotsCoreModule,
     TotsAuthModule,
     TotsTableModule,
-    BrowserAnimationsModule
+    BrowserAnimationsModule,
+    MatDialogModule,
   ],
   providers: [
     {
       provide: TOTS_CORE_PROVIDER,
       useValue: {
-        baseUrl: 'https://agency-coda.uc.r.appspot.com/'
-      }
+        baseUrl: 'https://agency-coda.uc.r.appspot.com/',
+      },
     },
     {
       provide: TOTS_CLOUD_STORAGE_PROVIDER,
       useValue: {
-        bucket: 'codahub-files'
-      }
+        bucket: 'codahub-files',
+      },
     },
     {
       provide: HTTP_INTERCEPTORS,
       useClass: TotsAuthInterceptor,
-      multi: true
+      multi: true,
     },
     {
       provide: TOTS_AUTH_PROVIDER,
       useValue: {
         signInPath: 'oauth/token',
         changePasswordPath: 'users/me/password',
-      } as TotsAuthConfig
+      } as TotsAuthConfig,
     },
   ],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
 })
-export class AppModule { }
+export class AppModule {}

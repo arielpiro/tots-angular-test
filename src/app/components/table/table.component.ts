@@ -1,7 +1,13 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, Inject, ViewChild } from '@angular/core';
+import {
+  MAT_DIALOG_DATA,
+  MatDialog,
+  MatDialogRef,
+} from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { TotsListResponse } from '@tots/core';
 import {
+  MoreMenuColumnComponent,
   TotsActionTable,
   TotsColumn,
   TotsStringColumn,
@@ -11,6 +17,7 @@ import {
 import { delay, of } from 'rxjs';
 import { Client } from 'src/app/entities/client';
 import { ClientService, ClientsData } from 'src/app/services/client.service';
+import { FormComponent } from '../form/form.component';
 
 @Component({
   selector: 'app-table',
@@ -38,37 +45,12 @@ export class TableComponent {
   //   { id: this.id++, name: 'Item 5', lastname: 'AB232', email: '2021-01-01' },
   // ];
 
-  constructor(private clientSrv: ClientService) {}
+  constructor(private clientSrv: ClientService, public dialog: MatDialog) {}
 
   ngOnInit(): void {
-    //this.legacyConfig();
-    //this.configThroughFactories();
     this.miniConfig();
-    this.clientSrv.getClientsList().subscribe({
-      next: (res: ClientsData) => {
-        console.log(res.response.data);
-        this.items = res.response.data;
-
-        let data = new TotsListResponse();
-        data.data = [...this.items];
-        data.total = 50;
-
-        this.config.obs = of(data).pipe(delay(2000));
-        this.tableComp.loadItems();
-      },
-      error: (err) => console.log(err),
-      complete() {
-        console.log('complete');
-      },
-    });
-    // this.clientSrv.getClient().subscribe({
-    //   next: (data) => console.log(data),
-    //   error: (err) => console.log(err),
-    //   complete() {
-    //     console.log('complete');
-    //   },
-    // });
   }
+
   miniConfig() {
     this.config.id = 'clients-table';
 
@@ -90,27 +72,61 @@ export class TableComponent {
         ''
       ),
       new TotsStringColumn('email', 'email', 'Email', false, undefined, ''),
+      {
+        key: 'more',
+        component: MoreMenuColumnComponent,
+        title: '',
+        extra: {
+          stickyEnd: true,
+          width: '60px',
+          actions: [
+            { icon: 'add', title: 'Editar', key: 'edit' },
+            { icon: 'add', title: 'Eliminar', key: 'remove' },
+          ],
+        },
+      },
     ];
+
+    this.clientSrv.getClientsList().subscribe({
+      next: (res: ClientsData) => {
+        console.log(res.response.data);
+        this.items = res.response.data;
+
+        let data = new TotsListResponse();
+        data.data = [...this.items];
+        data.total = 50;
+
+        this.config.obs = of(data).pipe(delay(2000));
+        this.tableComp.loadItems();
+      },
+      error: (err) => console.log(err),
+      complete() {
+        console.log('complete');
+      },
+    });
   }
 
   onOrder(column: TotsColumn) {
     let response = new TotsListResponse();
-
-    if (column.order == 'asc') {
-      response.data = this.items.sort((a, b) =>
-        a.firstname > b.firstname ? 1 : b.firstname > a.firstname ? -1 : 0
-      );
-    } else {
-      response.data = this.items.sort((a, b) =>
-        a.firstname < b.firstname ? 1 : b.firstname < a.firstname ? -1 : 0
-      );
-    }
+    response.data = this.items.sort((a, b) => {
+      if (column.order == 'asc') {
+        return a[column.key as keyof Client]
+          .toString()
+          .localeCompare(b[column.key as keyof Client].toString());
+      } else {
+        return b[column.key as keyof Client]
+          .toString()
+          .localeCompare(a[column.key as keyof Client].toString());
+      }
+    });
 
     this.config.obs = of(response);
     this.tableComp.loadItems();
+    console.log(response.data[0], this.items[0]);
   }
 
   onTableAction(action: TotsActionTable) {
+    console.log(action);
     if (action.key == 'click-order') {
       this.onOrder(action.item);
     } else if (action.key == 'select-item') {
@@ -120,6 +136,8 @@ export class TableComponent {
     } else if (action.key == 'form-change') {
       console.log(action.item.valid);
       console.log(action.item.values);
+    } else if (action.key == 'edit') {
+      this.openForm(action.item);
     } else if (action.key == 'delete') {
       this.removeItem(action.item);
     } else if (action.key == 'page-change') {
@@ -163,5 +181,11 @@ export class TableComponent {
 
     this.config.obs = of(data).pipe(delay(2000));
     this.tableComp.loadItems();
+  }
+
+  openForm(client: Client) {
+    this.dialog.open(FormComponent, {
+      data: client,
+    });
   }
 }
