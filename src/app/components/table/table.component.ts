@@ -1,9 +1,4 @@
 import { Component, Inject, ViewChild } from '@angular/core';
-import {
-  MAT_DIALOG_DATA,
-  MatDialog,
-  MatDialogRef,
-} from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { TotsListResponse } from '@tots/core';
 import {
@@ -14,10 +9,19 @@ import {
   TotsTableComponent,
   TotsTableConfig,
 } from '@tots/table';
-import { delay, of } from 'rxjs';
+import { delay, of, tap } from 'rxjs';
 import { Client } from 'src/app/entities/client';
 import { ClientService, ClientsData } from 'src/app/services/client.service';
-import { FormComponent } from '../form/form.component';
+import {
+  AvatarPhotoFieldComponent,
+  StringFieldComponent,
+  SubmitButtonFieldComponent,
+  TextareaFieldComponent,
+  TotsFormModalService,
+  TotsModalConfig,
+} from '@tots/form';
+import { Validators } from '@angular/forms';
+import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-table',
@@ -32,20 +36,11 @@ export class TableComponent {
   private id = 0;
   items!: Client[];
 
-  // items = [
-  //   {
-  //     id: this.id++,
-  //     name: 'Item 1, pedro',
-  //     lastname: 'AB232',
-  //     email: '2021-01-01',
-  //   },
-  //   { id: this.id++, name: 'Item 2', lastname: 'AB232', email: '2021-01-01' },
-  //   { id: this.id++, name: 'Item 3', lastname: 'AB232', email: '2021-01-01' },
-  //   { id: this.id++, name: 'Item 4', lastname: 'AB232', email: '2021-01-01' },
-  //   { id: this.id++, name: 'Item 5', lastname: 'AB232', email: '2021-01-01' },
-  // ];
-
-  constructor(private clientSrv: ClientService, public dialog: MatDialog) {}
+  constructor(
+    private clientSrv: ClientService,
+    protected modalService: TotsFormModalService,
+    private sanitizer: DomSanitizer
+  ) {}
 
   ngOnInit(): void {
     this.miniConfig();
@@ -183,9 +178,77 @@ export class TableComponent {
     this.tableComp.loadItems();
   }
 
-  openForm(client: Client) {
-    this.dialog.open(FormComponent, {
-      data: client,
-    });
+  openForm(client?: Client) {
+    let config = new TotsModalConfig();
+    config.title = 'Modal de ejemplo';
+    config.autoSave = true;
+    config.item = client;
+    config.fields = [
+      {
+        key: 'firstname',
+        component: StringFieldComponent,
+        label: 'Nombre',
+        validators: [Validators.required],
+      },
+      {
+        key: 'lastname',
+        component: StringFieldComponent,
+        label: 'Apellido',
+        validators: [Validators.required],
+      },
+      {
+        key: 'email',
+        component: StringFieldComponent,
+        label: 'Email',
+        validators: [Validators.required],
+      },
+      {
+        key: 'address',
+        component: StringFieldComponent,
+        label: 'Dirección',
+      },
+      {
+        key: 'photo',
+        component: AvatarPhotoFieldComponent,
+        label: 'Foto',
+        extra: {
+          button_text: 'Subir foto',
+          remove_text: 'Eliminar foto',
+          service: {
+            upload: (e: any) => {
+              const objectURL = URL.createObjectURL(e);
+              const image = this.sanitizer.bypassSecurityTrustUrl(objectURL);
+              return of({
+                url: image,
+              });
+            },
+          },
+        },
+      },
+      {
+        key: 'caption',
+        component: TextareaFieldComponent,
+        label: 'Información adicional',
+      },
+      {
+        key: 'submit',
+        component: SubmitButtonFieldComponent,
+        label: config.item ? 'Editar' : 'Agregar',
+      },
+    ];
+    this.modalService
+      .open(config)
+      .pipe(
+        tap((action) => {
+          if (action.key == 'submit') {
+            action.modal?.componentInstance.showLoading();
+          }
+        })
+      )
+      .pipe(delay(2000))
+      .pipe(tap((action) => action.modal?.componentInstance.hideLoading()))
+      .subscribe((action) => {
+        console.log(action);
+      });
   }
 }

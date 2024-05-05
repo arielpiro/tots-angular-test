@@ -15,11 +15,10 @@ import { TOTS_CLOUD_STORAGE_PROVIDER } from '@tots/cloud-storage';
 import { TableComponent } from './components/table/table.component';
 import { TotsTableModule } from '@tots/table';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { MatDialogModule } from '@angular/material/dialog';
-import { FormComponent } from './components/form/form.component';
+import { TotsFormModule } from '@tots/form';
 
 @NgModule({
-  declarations: [AppComponent, TableComponent, FormComponent],
+  declarations: [AppComponent, TableComponent],
   imports: [
     BrowserModule,
     AppRoutingModule,
@@ -29,7 +28,7 @@ import { FormComponent } from './components/form/form.component';
     TotsAuthModule,
     TotsTableModule,
     BrowserAnimationsModule,
-    MatDialogModule,
+    TotsFormModule,
   ],
   providers: [
     {

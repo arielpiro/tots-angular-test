@@ -1,6 +1,27 @@
 .container {
-  width: 1200px;
+  position: relative;
+  max-width: 1200px;
   margin: auto;
   padding: 4em;
   background-color: white;
+  .fixed-wraper {
+    position: absolute;
+  }
+  .add-button {
+    background-image: linear-gradient(to right, #314755 0%, #26a0da 81%);
+    color: #fff;
+    border-radius: 50%;
+    border: 0px;
+    box-shadow: rgba(0, 0, 0, 0.8) 0px 0px 10px;
+    font-size: 2rem;
+    height: 50px;
+    width: 50px;
+    cursor: pointer;
+    position: fixed;
+    bottom: 10px;
+    margin-left: 1180px;
+    @media (max-width: 1320px) {
+      right: 20px;
+    }
+  }
 }
