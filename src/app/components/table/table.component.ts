@@ -38,15 +38,14 @@ export class TableComponent {
 
   constructor(
     private clientSrv: ClientService,
-    protected modalService: TotsFormModalService,
-    private sanitizer: DomSanitizer
+    protected modalService: TotsFormModalService
   ) {}
 
   ngOnInit(): void {
-    this.miniConfig();
+    this.setConfig();
   }
 
-  miniConfig() {
+  setConfig() {
     this.config.id = 'clients-table';
 
     this.config.columns = [
@@ -54,7 +53,7 @@ export class TableComponent {
         'firstname',
         'firstname',
         'Nombre',
-        false,
+        true,
         undefined,
         ''
       ),
@@ -62,11 +61,11 @@ export class TableComponent {
         'lastname',
         'lastname',
         'Apellido',
-        false,
+        true,
         undefined,
         ''
       ),
-      new TotsStringColumn('email', 'email', 'Email', false, undefined, ''),
+      new TotsStringColumn('email', 'email', 'Email', true, undefined, ''),
       {
         key: 'more',
         component: MoreMenuColumnComponent,
@@ -76,7 +75,7 @@ export class TableComponent {
           width: '60px',
           actions: [
             { icon: 'add', title: 'Editar', key: 'edit' },
-            { icon: 'add', title: 'Eliminar', key: 'remove' },
+            { icon: 'add', title: 'Eliminar', key: 'delete' },
           ],
         },
       },
@@ -84,14 +83,13 @@ export class TableComponent {
 
     this.clientSrv.getClientsList().subscribe({
       next: (res: ClientsData) => {
-        console.log(res.response.data);
         this.items = res.response.data;
 
         let data = new TotsListResponse();
         data.data = [...this.items];
         data.total = 50;
 
-        this.config.obs = of(data).pipe(delay(2000));
+        this.config.obs = of(data);
         this.tableComp.loadItems();
       },
       error: (err) => console.log(err),
@@ -102,87 +100,95 @@ export class TableComponent {
   }
 
   onOrder(column: TotsColumn) {
-    let response = new TotsListResponse();
-    response.data = this.items.sort((a, b) => {
-      if (column.order == 'asc') {
-        return a[column.key as keyof Client]
-          .toString()
-          .localeCompare(b[column.key as keyof Client].toString());
-      } else {
-        return b[column.key as keyof Client]
-          .toString()
-          .localeCompare(a[column.key as keyof Client].toString());
-      }
-    });
+    let data = new TotsListResponse();
+    data.data = [
+      ...this.items.sort((a, b) => {
+        if (column.order == 'asc') {
+          return a[column.key as keyof Client]
+            .toString()
+            .localeCompare(b[column.key as keyof Client].toString());
+        } else {
+          return b[column.key as keyof Client]
+            .toString()
+            .localeCompare(a[column.key as keyof Client].toString());
+        }
+      }),
+    ];
 
-    this.config.obs = of(response);
-    this.tableComp.loadItems();
-    console.log(response.data[0], this.items[0]);
+    this.config.obs = of(data);
+    this.tableComp?.loadItems();
   }
 
   onTableAction(action: TotsActionTable) {
-    console.log(action);
     if (action.key == 'click-order') {
       this.onOrder(action.item);
-    } else if (action.key == 'select-item') {
-      action.item.isSelected = true;
-    } else if (action.key == 'unselect-item') {
-      action.item.isSelected = false;
-    } else if (action.key == 'form-change') {
-      console.log(action.item.valid);
-      console.log(action.item.values);
     } else if (action.key == 'edit') {
       this.openForm(action.item);
     } else if (action.key == 'delete') {
-      this.removeItem(action.item);
-    } else if (action.key == 'page-change') {
-      this.changePage(action.item);
+      this.deleteItem(action.item);
     }
   }
 
-  addItem() {
-    this.items = [
-      ...this.items,
+  addItem(client: Client) {
+    this.items = [client, ...this.items];
+
+    let data = new TotsListResponse();
+    data.data = this.items;
+
+    this.config.obs = of(data);
+    this.tableComp?.loadItems();
+  }
+
+  deleteItem(client: Client) {
+    let config = new TotsModalConfig();
+    config.title = `Esta seguro de querer eliminar al cliente ${client.firstname} ${client.lastname}`;
+    config.item = client;
+    config.fields = [
       {
-        id: this.id++,
-        title: 'Item 5',
-        active: 1,
-        subtitle: 'AB232',
-        date: '2021-01-01',
-        edit_field: 'pushed item',
-      } as any,
+        key: 'submit',
+        component: SubmitButtonFieldComponent,
+        label: 'Eliminar',
+      },
+      {
+        key: 'cancel',
+        component: SubmitButtonFieldComponent,
+        label: 'Cancelar',
+      },
     ];
+    this.modalService
+      .open(config)
+      .pipe(
+        tap((action) => {
+          if (action.key == 'submit') {
+            action.modal?.componentInstance.showLoading();
+            this.clientSrv.deleteClient(config.item.id).subscribe({
+              next: (res) => {
+                action.modal?.close();
+                this.items = this.items.filter((i) => i.id != config.item.id);
+                let data = new TotsListResponse();
+                data.data = this.items;
 
-    let data = new TotsListResponse();
-    data.data = this.items;
-
-    this.config.obs = of(data);
-    this.tableComp?.loadItems();
-  }
-
-  removeItem(item: any) {
-    this.items = this.items.filter((i) => i.id != item.id);
-    let data = new TotsListResponse();
-    data.data = this.items;
-
-    this.config.obs = of(data);
-    this.tableComp?.loadItems();
-  }
-
-  private changePage(pageEvent: PageEvent) {
-    let data = new TotsListResponse();
-    data.data = [...this.items];
-    data.total = 50;
-
-    this.config.obs = of(data).pipe(delay(2000));
-    this.tableComp.loadItems();
+                this.config.obs = of(data);
+                this.tableComp?.loadItems();
+              },
+              error: (err) => console.log(err),
+            });
+          }
+          if (action.key == 'cancel') {
+            action.modal?.close();
+          }
+        })
+      )
+      .pipe(delay(2000))
+      .subscribe((action) => {});
   }
 
   openForm(client?: Client) {
     let config = new TotsModalConfig();
-    config.title = 'Modal de ejemplo';
+    config.item = client || {};
+    const typeTitle = config.item.id ? 'Editar cliente' : 'Agregar cliente';
+    config.title = typeTitle;
     config.autoSave = true;
-    config.item = client;
     config.fields = [
       {
         key: 'firstname',
@@ -217,9 +223,8 @@ export class TableComponent {
           service: {
             upload: (e: any) => {
               const objectURL = URL.createObjectURL(e);
-              const image = this.sanitizer.bypassSecurityTrustUrl(objectURL);
               return of({
-                url: image,
+                url: objectURL,
               });
             },
           },
@@ -233,7 +238,7 @@ export class TableComponent {
       {
         key: 'submit',
         component: SubmitButtonFieldComponent,
-        label: config.item ? 'Editar' : 'Agregar',
+        label: typeTitle,
       },
     ];
     this.modalService
@@ -242,13 +247,19 @@ export class TableComponent {
         tap((action) => {
           if (action.key == 'submit') {
             action.modal?.componentInstance.showLoading();
+            this.clientSrv.updateClient(config.item).subscribe({
+              next: (res) => {
+                if (!config.item.id) this.addItem(res.response);
+              },
+              error: (err) => console.log(err),
+              complete: () => {
+                action.modal?.close();
+              },
+            });
           }
         })
       )
       .pipe(delay(2000))
-      .pipe(tap((action) => action.modal?.componentInstance.hideLoading()))
-      .subscribe((action) => {
-        console.log(action);
-      });
+      .subscribe((action) => {});
   }
 }

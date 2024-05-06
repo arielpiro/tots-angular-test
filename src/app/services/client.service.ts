@@ -5,33 +5,16 @@ import {
   TOTS_CORE_PROVIDER,
   TotsBaseHttpService,
   TotsCoreConfig,
+  TotsListResponse,
 } from '@tots/core';
 
 export interface ClientsData {
   success: boolean;
-  response: Response;
+  response: TotsListResponse<Client>;
 }
-
-export interface Response {
-  current_page: number;
-  data: Client[];
-  first_page_url: string;
-  from: number;
-  last_page: number;
-  last_page_url: string;
-  links: Link[];
-  next_page_url: string;
-  path: string;
-  per_page: number;
-  prev_page_url: null;
-  to: number;
-  total: number;
-}
-
-export interface Link {
-  url: null | string;
-  label: string;
-  active: boolean;
+export interface ClientData {
+  success: boolean;
+  response: Client;
 }
 
 @Injectable({
@@ -62,5 +45,22 @@ export class ClientService extends TotsBaseHttpService<Client> {
     return this.http.get<Client>(
       '`${this.basePathUrl}/client/list/client/fetch/1757`'
     );
+  }
+
+  updateClient(client: Client) {
+    console.log('updated', client);
+    let headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+    });
+
+    return this.http.post<ClientData>(
+      `${this.basePathUrl}/client/save`,
+      client,
+      { headers }
+    );
+  }
+
+  deleteClient(id: number) {
+    return this.http.delete<Client>(`${this.basePathUrl}/client/remove/${id}`);
   }
 }

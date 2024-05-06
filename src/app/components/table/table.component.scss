@@ -3,12 +3,16 @@
   max-width: 1200px;
   margin: auto;
   padding: 4em;
-  background-color: white;
+  background-color: #9f9f9fd1;
   .fixed-wraper {
     position: absolute;
   }
+  h1 {
+    font-size: 22px;
+    color: #525151;
+  }
   .add-button {
-    background-image: linear-gradient(to right, #314755 0%, #26a0da 81%);
+    background-image: linear-gradient(to right, #405891 0%, #a9bff0 81%);
     color: #fff;
     border-radius: 50%;
     border: 0px;
@@ -20,8 +24,12 @@
     position: fixed;
     bottom: 10px;
     margin-left: 1180px;
+    z-index: 2;
     @media (max-width: 1320px) {
       right: 20px;
     }
+  }
+  .add-button:hover {
+    background-image: linear-gradient(to right, #918e8e 0%, #9f9f9fd1 81%);
   }
 }
