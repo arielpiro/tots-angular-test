@@ -1,5 +1,13 @@
 # TotsTestAngular
 
+Lectura y analisis del proyecto, librerías y tareas. 1h
+Instalación de proyectos, construcción de librerías locales y descarga de modulos. 2h
+desarrollo de tabla 2h
+desarrollo formulario 2h
+servicios 30min
+
+El paginado no esta funcionando como corresponde, no le dedique tiempo a resolverlo porque no era una indicación del test, si al order que quedó funcionando, en la muestra no funcionaba correctamente. En general lo que mas tiempo me llevó fue la investigación del funcionamiento de la librería. Para ejecutar el proyecto hay que usar el flag --force porque sino da error de dependencias en las librerías locales que están incluidas en el directorio raiz.
+
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 16.2.5.
 
 ## Development server
